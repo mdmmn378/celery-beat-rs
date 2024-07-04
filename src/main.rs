@@ -1,41 +1,36 @@
-use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
-use serde::Deserialize;
-use std::time::Duration;
-use tokio::task;
+mod apis;
+mod broker;
+mod models;
+mod task_registry;
+use std::sync::Arc;
 
-#[derive(Deserialize)]
-struct TaskPayload {
-    // sleep_time in milliseconds
-    sleep_time: u64,
-    message: String,
-}
-
-#[post("/sleep")]
-async fn sleep_handler(payload: web::Json<TaskPayload>) -> impl Responder {
-    // Call the function to start a background task
-    start_background_task(payload.sleep_time, payload.message.clone());
-
-    // Respond immediately
-    HttpResponse::Ok().body("Job started")
-}
-
-fn start_background_task(sleep_time: u64, message: String) {
-    let duration = Duration::from_millis(sleep_time);
-    // For test purposes, create 1000 tasks
-    for i in 0..1000 {
-        let message = message.clone();
-        let duration = duration;
-        task::spawn(async move {
-            tokio::time::sleep(duration).await;
-            println!("{} {}", message, i);
-        });
-    }
-}
+use actix_web::middleware::NormalizePath;
+use actix_web::middleware::TrailingSlash;
+use actix_web::{web, App, HttpServer};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(sleep_handler))
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    let addr = "0.0.0.0";
+    let port = 8080;
+    let bind_addr = format!("{}:{}", addr, port);
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+
+    println!("Starting server at: {}", bind_addr);
+    let broker = broker::Broker::new("redis://localhost:6379");
+    let app_data = Arc::new(models::AppData {
+        broker: Arc::new(broker),
+    });
+    HttpServer::new({
+        let app_data = app_data.clone();
+        move || {
+            App::new()
+                .wrap(NormalizePath::new(TrailingSlash::Trim))
+                .service(web::scope("/api/v1").configure(apis::init_routes))
+                .app_data(web::Data::new(app_data.clone()))
+        }
+    })
+    .bind(bind_addr)?
+    .run()
+    .await
 }
