@@ -90,7 +90,7 @@ pub fn create_task(
 
     let body_serialized = serde_json::to_string(&body_content).unwrap();
     // let body_encoded = encode(&body_serialized);
-    let body_encoded = BASE64_STANDARD.encode(&body_serialized.as_bytes());
+    let body_encoded = BASE64_STANDARD.encode(body_serialized.as_bytes());
 
     Payload {
         body: body_encoded,
