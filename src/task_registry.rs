@@ -4,6 +4,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+use crate::utils;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Headers {
     pub lang: String,
@@ -89,7 +91,6 @@ pub fn create_task(
     ];
 
     let body_serialized = serde_json::to_string(&body_content).unwrap();
-    // let body_encoded = encode(&body_serialized);
     let body_encoded = BASE64_STANDARD.encode(body_serialized.as_bytes());
 
     Payload {
@@ -109,9 +110,9 @@ pub fn create_task(
             timelimit: [None, None],
             root_id: Uuid::new_v4().to_string(),
             parent_id: None,
-            argsrepr: format!("{:?}", body_content[0]), // [1, 2
-            kwargsrepr: format!("{:?}", body_content[1]), // {}
-            origin: "gen49613@theabacus".to_string(),
+            argsrepr: format!("{:?}", body_content[0]),
+            kwargsrepr: format!("{:?}", body_content[1]),
+            origin: utils::get_random_origin(), // TODO: get the origin from the request
             ignore_result: false,
             replaced_task_nesting: 0,
             stamped_headers: None,

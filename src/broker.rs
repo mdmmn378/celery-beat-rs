@@ -1,6 +1,12 @@
 use crate::task_registry::Payload;
-
 use redis::{AsyncCommands, RedisResult};
+
+pub trait TaskTracker {
+    async fn create_task_tracker(&self, payload: &Payload) -> RedisResult<()>;
+    async fn get_task_tracker(&self, task_id: &str) -> RedisResult<Payload>;
+    async fn delete_task_tracker(&self, task_id: &str) -> RedisResult<()>;
+    async fn list_task_trackers(&self) -> RedisResult<Vec<Payload>>;
+}
 
 pub struct Broker {
     connection_string: String,
@@ -77,8 +83,10 @@ impl Broker {
             "Task not found",
         )))
     }
+}
 
-    pub async fn create_task_tracker(&self, payload: &Payload) -> RedisResult<()> {
+impl TaskTracker for Broker {
+    async fn create_task_tracker(&self, payload: &Payload) -> RedisResult<()> {
         let mut con = self.connect().await?;
         let serialized_payload = serde_json::to_string(payload);
         con.hset(
@@ -90,20 +98,20 @@ impl Broker {
         Ok(())
     }
 
-    pub async fn get_task_tracker(&self, task_id: &str) -> RedisResult<Payload> {
+    async fn get_task_tracker(&self, task_id: &str) -> RedisResult<Payload> {
         let mut con = self.connect().await?;
         let payload: String = con.hget("celery_trackers", task_id).await?;
         let payload: Payload = serde_json::from_str(payload.as_str()).unwrap();
         Ok(payload)
     }
 
-    pub async fn delete_task_tracker(&self, task_id: &str) -> RedisResult<()> {
+    async fn delete_task_tracker(&self, task_id: &str) -> RedisResult<()> {
         let mut con = self.connect().await?;
         con.hdel("celery_trackers", task_id).await?;
         Ok(())
     }
 
-    pub async fn list_task_trackers(&self) -> RedisResult<Vec<Payload>> {
+    async fn list_task_trackers(&self) -> RedisResult<Vec<Payload>> {
         let mut con = self.connect().await?;
         let trackers: Result<Vec<String>, redis::RedisError> = con.hvals("celery_trackers").await;
         let mut res_trackers: Vec<Payload> = Vec::new();
@@ -124,10 +132,9 @@ impl Broker {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::task_registry::create_task;
     use serde_json::Value;
-
-    use super::*;
 
     #[tokio::test]
     async fn test_push_task() {
