@@ -1,5 +1,5 @@
+use crate::models::create_task;
 use crate::models::{AppData, SubmissionStatus, TaskSubmitRequest, TaskSubmitResponse};
-use crate::task_registry::create_task;
 use actix_web::{get, post, web, HttpResponse, Responder};
 // use log::debug;
 use std::sync::Arc;

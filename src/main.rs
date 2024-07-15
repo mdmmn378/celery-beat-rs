@@ -1,7 +1,7 @@
 mod apis;
+mod beat;
 mod broker;
 mod models;
-mod task_registry;
 mod tracker;
 mod utils;
 use std::sync::Arc;

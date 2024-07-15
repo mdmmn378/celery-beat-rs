@@ -2,7 +2,7 @@ use bson;
 use futures::StreamExt;
 use mongodb::{Client, Collection};
 
-use crate::task_registry::Payload;
+use crate::models::Payload;
 
 #[allow(dead_code)]
 pub struct MongoDB {
@@ -26,7 +26,7 @@ impl MongoDB {
     pub async fn list_tasks(&self) -> Vec<Payload> {
         let db = self.client.database("celery");
         let collection = db.collection("tasks");
-        let filter = bson::doc! {};
+        let filter = bson::doc! {"active": true};
         let tasks: mongodb::Cursor<Payload> = collection.find(filter).await.unwrap();
         let mut res_tasks: Vec<Payload> = Vec::new();
         tasks
@@ -57,10 +57,11 @@ impl MongoDB {
     }
 }
 
+// RUST_TEST_THREADS=1 cargo test
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::task_registry::create_task;
+    use crate::models::create_task;
     use serde_json::json;
 
     #[tokio::test]
@@ -75,7 +76,6 @@ mod tests {
         let mongo = MongoDB::new("mongodb://localhost:27017").await;
         let tasks = mongo.list_tasks().await;
         assert!(tasks.len() > 0);
-        println!("{:?}", tasks);
     }
 
     #[tokio::test]
