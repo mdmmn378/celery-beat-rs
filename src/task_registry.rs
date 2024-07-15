@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::utils;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Headers {
     pub lang: String,
     pub task: String,
@@ -29,13 +29,13 @@ pub struct Headers {
     pub stamps: HashMap<String, u32>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct DeliveryInfo {
     pub exchange: String,
     pub routing_key: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Properties {
     pub correlation_id: String,
     pub reply_to: String,
@@ -54,7 +54,7 @@ pub struct TaskDetails {
     pub chord: Option<()>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Payload {
     pub body: String,
     #[serde(rename = "content-encoding")]
@@ -63,6 +63,13 @@ pub struct Payload {
     pub content_type: String,
     pub headers: Headers,
     pub properties: Properties,
+    // optional fields
+    pub next_call: Option<bson::DateTime>,
+    pub insert_at: Option<bson::DateTime>,
+    pub updated_at: Option<bson::DateTime>,
+    pub last_called_at: Option<bson::DateTime>,
+    pub cron: Option<String>,
+    pub active: Option<bool>,
 }
 
 #[allow(dead_code)]
@@ -130,7 +137,21 @@ pub fn create_task(
             body_encoding: "base64".to_string(),
             delivery_tag: Uuid::new_v4().to_string(),
         },
+        next_call: None,
+        insert_at: None,
+        updated_at: None,
+        last_called_at: None,
+        active: None,
+        cron: None,
     }
+}
+
+#[allow(dead_code)]
+pub fn deserialize_body(body: &str) -> Vec<Value> {
+    let decoded = BASE64_STANDARD.decode(body.as_bytes()).unwrap();
+    let body_str = String::from_utf8(decoded).unwrap();
+    let body: Vec<Value> = serde_json::from_str(&body_str).unwrap();
+    body
 }
 
 #[cfg(test)]

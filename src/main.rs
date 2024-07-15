@@ -1,4 +1,5 @@
 mod apis;
+mod beat;
 mod broker;
 mod models;
 mod task_registry;

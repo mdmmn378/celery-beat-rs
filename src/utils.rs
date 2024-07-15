@@ -1,3 +1,5 @@
+use chrono::prelude::*;
+use cron_parser;
 use rand;
 use rand::Rng;
 
@@ -14,4 +16,22 @@ pub fn get_random_string(length: usize) -> String {
 
 pub fn get_random_origin() -> String {
     format!("{}@localhost", get_random_string(16))
+}
+
+pub fn next_call(previouse: DateTime<Utc>, expr: String) -> DateTime<Utc> {
+    let next = cron_parser::parse(&expr, &previouse).unwrap();
+    next
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_next_call() {
+        let expr = "*/5 * * * *".to_string();
+        let now = Utc::now();
+        let next = next_call(now, expr);
+        assert!(next > now);
+    }
 }

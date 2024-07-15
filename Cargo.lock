@@ -465,6 +465,7 @@ dependencies = [
  "base64 0.22.1",
  "bson",
  "chrono",
+ "cron-parser",
  "dotenvy",
  "env_logger",
  "futures",
@@ -559,6 +560,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a97769d94ddab943e4510d138150169a2758b5ef3eb191a9ee688de3e23ef7b3"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "cron-parser"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dec3fb0ecd16373b24b010094aba123e810f5f778b419bf826cb36919b8a42fe"
+dependencies = [
+ "chrono",
 ]
 
 [[package]]

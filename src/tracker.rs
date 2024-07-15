@@ -26,7 +26,7 @@ impl MongoDB {
     pub async fn list_tasks(&self) -> Vec<Payload> {
         let db = self.client.database("celery");
         let collection = db.collection("tasks");
-        let filter = bson::doc! {};
+        let filter = bson::doc! {"active": true};
         let tasks: mongodb::Cursor<Payload> = collection.find(filter).await.unwrap();
         let mut res_tasks: Vec<Payload> = Vec::new();
         tasks
