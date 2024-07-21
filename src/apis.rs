@@ -1,7 +1,7 @@
 use crate::models::create_task;
 use crate::models::{AppData, SubmissionStatus, TaskSubmitRequest, TaskSubmitResponse};
 use actix_web::{get, post, web, HttpResponse, Responder};
-// use log::debug;
+use log;
 use std::sync::Arc;
 
 #[post("/submit-task")]
@@ -12,7 +12,18 @@ async fn submit_task_api_view(
     let serialized_task = create_task(&task.task_name, task.args.clone(), task.kwargs.clone());
     // debug!("Serialized task: {:?}", serialized_task);
 
-    app_data.broker.push_task(&serialized_task).await.unwrap();
+    let res = app_data.broker.push_task(&serialized_task).await;
+
+    match res {
+        Ok(_) => {}
+        Err(err) => {
+            log::error!("Error: {err}");
+            let ret = HttpResponse::InternalServerError()
+                .content_type("application/json")
+                .body(r#""#);
+            return ret;
+        }
+    }
     HttpResponse::Ok()
         .content_type("application/json")
         .append_header(("X-Task-Id", serialized_task.headers.id))

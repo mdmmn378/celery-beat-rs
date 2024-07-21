@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use crate::models::Payload;
 use redis::{AsyncCommands, RedisResult};
 
@@ -22,7 +24,7 @@ impl Broker {
 
     async fn connect(&self) -> RedisResult<redis::aio::MultiplexedConnection> {
         let client = redis::Client::open(self.connection_string.as_str())?;
-        let con = client.get_multiplexed_async_connection().await?;
+        let con = client.get_multiplexed_tokio_connection().await?;
         Ok(con)
     }
 
@@ -30,6 +32,9 @@ impl Broker {
         let mut con = self.connect().await?;
         let serialized_payload = serde_json::to_string(payload);
         con.lpush("celery", serialized_payload.unwrap()).await?;
+        drop(con);
+        let duration: Duration = Duration::from_millis(10);
+        sleep(duration);
         Ok(())
     }
 
