@@ -19,10 +19,8 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     println!("Starting server at: {}", bind_addr);
-    let broker = broker::Broker::new("redis://localhost:6379");
-    let app_data = Arc::new(models::AppData {
-        broker: Arc::new(broker),
-    });
+    let broker = broker::Broker::new("redis://localhost:6379").await;
+    let app_data = Arc::new(models::AppData { broker: broker });
     HttpServer::new({
         let app_data = app_data.clone();
         move || {

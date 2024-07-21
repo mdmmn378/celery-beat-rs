@@ -3,7 +3,7 @@ use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use strum_macros::{Display, EnumString};
 use uuid::Uuid;
 
@@ -38,7 +38,7 @@ pub struct TaskSubmitResponse {
 }
 
 pub struct AppData {
-    pub broker: Arc<Broker>,
+    pub broker: Arc<Mutex<Broker>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -182,7 +182,7 @@ pub fn create_task(
 }
 
 #[allow(dead_code)]
-pub fn deserialize_body(body: &str) -> Vec<Value> {
+pub fn deserialize_task_body(body: &str) -> Vec<Value> {
     let decoded = BASE64_STANDARD.decode(body.as_bytes()).unwrap();
     let body_str = String::from_utf8(decoded).unwrap();
     let body: Vec<Value> = serde_json::from_str(&body_str).unwrap();

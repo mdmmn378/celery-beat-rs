@@ -12,7 +12,13 @@ async fn submit_task_api_view(
     let serialized_task = create_task(&task.task_name, task.args.clone(), task.kwargs.clone());
     // debug!("Serialized task: {:?}", serialized_task);
 
-    app_data.broker.push_task(&serialized_task).await.unwrap();
+    app_data
+        .broker
+        .lock()
+        .unwrap()
+        .push_task(&serialized_task)
+        .await
+        .unwrap();
     HttpResponse::Ok()
         .content_type("application/json")
         .append_header(("X-Task-Id", serialized_task.headers.id))
